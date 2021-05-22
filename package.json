@@ -1,0 +1,33 @@
+{
+  "name": "bar-balance-changes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepublish": "tsc",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint . --ext .ts",
+    "lint-fix": "eslint . --ext .ts --fix"
+  },
+  "author": "Jazcash",
+  "license": "mit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jazcash/bar-balance-changes.git"
+  },
+  "dependencies": {
+    "@octokit/auth-app": "^3.4.0",
+    "@octokit/core": "^3.4.0",
+    "@octokit/rest": "^18.5.2",
+    "@types/better-sqlite3": "^5.4.1",
+    "better-sqlite3": "^7.1.4",
+    "deep-object-diff": "^1.1.0",
+    "jaz-ts-utils": "^0.4.0",
+    "luaparse": "^0.3.0"
+  },
+  "devDependencies": {
+    "@types/luaparse": "^0.2.7"
+  }
+}
