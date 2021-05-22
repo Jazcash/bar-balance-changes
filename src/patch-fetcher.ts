@@ -1,22 +1,25 @@
 import { Octokit } from "@octokit/rest";
 import { diff, addedDiff, deletedDiff, updatedDiff, detailedDiff } from 'deep-object-diff';
 import * as luaparse from "luaparse";
-import { Expression, ReturnStatement, Statement, StringLiteral, TableConstructorExpression, TableKeyString } from "luaparse";
-import { ChangeType, ObjectChanges, PreparedUnitDefProperty, PrimitiveValue, UnitDefObject, UnitDefValueType, ValueChange } from "./types";
-import { unitDefProps } from "./unitdef-props";
+import { Expression, LocalStatement, ReturnStatement, Statement, StringLiteral, TableConstructorExpression, TableKeyString } from "luaparse";
+import { ValueChangeType, ObjectChanges, PreparedUnitDefProperty, PrimitiveValue, UnitDefObject, UnitDefValueType, ValueChange, ObjectChangeType, BuffComparator, BalancePatch, Author } from "./types";
+import { buffComparators, unitDefProps } from "./unitdef-props";
 
 export interface PatchFetcherConfig {
     owner: string;
     repo: string;
     branch?: string;
     auth?: string;
+    since?: Date;
+    until?: Date;
+    shas?: string[];
+    numberOfCommits?: number;
 }
 
 export class PatchFetcher {
     public config: PatchFetcherConfig;
 
     protected octokit: Octokit;
-    protected unitNames: { [key: string]: string; } = {};
 
     constructor(config: PatchFetcherConfig) {
         this.config = config;
@@ -26,77 +29,121 @@ export class PatchFetcher {
         });
     }
 
-    public async fetchLatestBalancePatches(since?: Date) : Promise<ObjectChanges[]> {
-        // const commits = await this.octokit.rest.repos.listCommits({ 
-        //     owner: this.config.owner,
-        //     repo: this.config.repo,
-        //     sha: this.config.branch,
-        //     path: "units",
-        //     since: since?.toISOString()
-        // });
-    
-        this.unitNames = await this.fetchUnitNames();
-
-        const commitChanges = this.parseCommit("d7bdef7298c7e2d915239e601781b3518ea7351c");
-        
-        return commitChanges;
-    }
-
-    public async fetchUnitNames() : Promise<{ [key: string]: string; }> {
-        const unitsEn = await this.octokit.rest.repos.getContent({
+    public async fetchLatestBalancePatches() : Promise<BalancePatch[]> {
+        const commits = await this.octokit.rest.repos.listCommits({ 
             owner: this.config.owner,
             repo: this.config.repo,
-            path: "language/units_en.lua",
-            mediaType: {
-                format: "raw"
+            sha: this.config.branch,
+            path: "units",
+            since: this.config?.since?.toISOString(),
+            until: this.config?.until?.toISOString()
+        });
+
+        const balanceChanges: BalancePatch[] = [];
+
+        let numOfCommitsProcessed = 0;
+        for (const commit of commits.data) {
+            if (numOfCommitsProcessed === this.config?.numberOfCommits) {
+                break;
             }
-        });
 
-        return this.parseUnitNames(unitsEn.data.toString());
+            if (this.config?.shas?.length && !this.config?.shas.includes(commit.sha)) {
+                continue;
+            }
+
+            const balanceChange = await this.parseCommit(commit.sha);
+            if (balanceChange) {
+                balanceChanges.push(balanceChange);
+            }
+
+            numOfCommitsProcessed++;
+        }
+
+        return balanceChanges;
     }
 
-    protected parseCommits() {
-        
+    protected async parseCommit(sha: string) : Promise<BalancePatch | undefined> {
+        try {
+            const fullCommit = await this.octokit.rest.repos.getCommit({
+                owner: this.config.owner,
+                repo: this.config.repo,
+                ref: sha
+            });
+
+            const date = new Date(fullCommit.data.commit.committer?.date!);
+            const message = fullCommit.data.commit.message;
+            const url = fullCommit.data.html_url;
+            const author: Author = {
+                name: fullCommit.data.commit.committer?.name!,
+                avatarUrl: fullCommit.data.author?.avatar_url!,
+                profileLink: fullCommit.data.author?.html_url!
+            };
+
+            const changes = await this.parseCommitBalanceChanges(sha);
+            
+            return { sha, date, message, url, author, changes };
+        } catch (err) {
+            console.log(err);
+            console.log(`Error processing commit: ${sha}`);
+
+            return;
+        }
     }
 
-    protected async parseCommit(commitSha: string) : Promise<ObjectChanges[]> {
-        const fullCommit = await this.octokit.rest.repos.getCommit({
-            owner: this.config.owner,
-            repo: this.config.repo,
-            ref: commitSha
-        });
+    protected async parseCommitBalanceChanges(commitSha: string) : Promise<ObjectChanges[]> {
+        try {
+            const fullCommit = await this.octokit.rest.repos.getCommit({
+                owner: this.config.owner,
+                repo: this.config.repo,
+                ref: commitSha
+            });
 
-        const parentSHA = fullCommit.data.parents[0].sha;
+            const parentSHA = fullCommit.data.parents[0].sha;
 
-        const files = fullCommit.data.files ?? [];
-        const changedFiles: string[] = [];
-        for (const file of files) {
-            if (file.filename && file.filename.match(/^units\/.*?\.lua$/)) {
-                if (file.status === "modified") {
-                    changedFiles.push(file.filename);
-                } else if (file.status === "added") {
-                    console.log(file);
-                } else if (file.status === "removed") {
+            const files = fullCommit.data.files ?? [];
+            const unitChanges: ObjectChanges[] = [];
+            for (const file of files) {
+                if (file.filename && file.filename.match(/^units\/.*?\.lua$/)) {
+                    try {
+                        let previousUnitDef: any = undefined;
+                        let currentUnitDef: any = undefined;
+    
+                        if (file.status === "modified") {
+                            previousUnitDef = await this.getUnitDef(file.filename, parentSHA);
+                            currentUnitDef = await this.getUnitDef(file.filename, commitSha);
+                        } else if (file.status === "added") {
+                            currentUnitDef = await this.getUnitDef(file.filename, commitSha);
+                        } else if (file.status === "removed") {
+                            previousUnitDef = await this.getUnitDef(file.filename, parentSHA);
+                        }
+            
+                        const unitDefDiff = diff(previousUnitDef, currentUnitDef);
+            
+                        // console.log(JSON.stringify(unitDefDiff, null, 4));
+            
+                        const unitChange = this.getUnitDefChanges(previousUnitDef, currentUnitDef, unitDefDiff)?.[0] as ObjectChanges;
 
+                        if (unitChange?.changes?.length && file.filename.includes("Scavengers")) {
+                            unitChange.isScav = true;
+                        }
+
+                        if (unitChange?.changes?.length) {
+                            unitChanges.push(unitChange);
+                        }
+                    } catch (err) {
+                        console.log(err);
+                        console.log(`Error parsing unitDef: ${file.filename} (${commitSha})`);
+                    }
                 }
             }
+
+            return unitChanges;
+        } catch (err) {
+            console.log(err);
+            console.log(`Error processing commit: ${commitSha}`);
+
+            return [];
         }
-
-        const unitChanges: ObjectChanges[] = [];
-
-        for (const file of changedFiles) {
-            const previousUnitDef = await this.getUnitDef(file, parentSHA);
-            const currentUnitDef = await this.getUnitDef(file, commitSha);
-
-            const unitDefDiff = diff(previousUnitDef, currentUnitDef);
-
-            console.log(unitDefDiff);
-
-            const changes = this.getUnitDefChanges(previousUnitDef, currentUnitDef, unitDefDiff)?.[0] as ObjectChanges;
-            unitChanges.push(changes);
-        }
-
-        return unitChanges;
     }
 
     protected async getUnitDef(filepath: string, sha: string) {
@@ -111,59 +158,80 @@ export class PatchFetcher {
         });
 
         const unitDef = this.parseUnitDef(fileContent.data.toString());
+
+        const unitDefProps = Object.values(unitDef)[0] as any;
+        if (unitDefProps && unitDefProps?.weapons?.length && unitDefProps.weapondefs) {
+            const newWeaponsObj: any = {};
+            const weaponDefKeys = Object.keys(unitDefProps.weapondefs);
+            unitDefProps.weapons.forEach((weaponObj: any, i: number) => {
+                newWeaponsObj[weaponDefKeys[i]] = weaponObj;
+            });
+            unitDefProps.weapons = newWeaponsObj;
+        }
         
         return unitDef;
     }
 
     protected getUnitDefChanges(prevUnitDefObj?: any, newUnitDefObj?: any, diffObj?: any) : Array<ValueChange | ObjectChanges> {
         const changes: Array<ValueChange | ObjectChanges> = [];
-        const name = (Object.entries(newUnitDefObj)?.[0]?.[1] as any)?.name as string | undefined;
+        let namePropValue = (Object.entries(newUnitDefObj)?.[0]?.[1] as any)?.name as string | undefined;
+        if (typeof namePropValue !== "string") {
+            namePropValue = undefined;
+        }
 
         for (const [key, val] of Object.entries(diffObj)) {
             const unitDefProp: undefined | PreparedUnitDefProperty = unitDefProps[key];
-            const prevValue = prevUnitDefObj[key];
-            const newValue = newUnitDefObj[key];
+            const prevValue = prevUnitDefObj?.[key];
+            const newValue = newUnitDefObj?.[key];
+            const propName = unitDefProp?.friendlyName ?? namePropValue ?? this.capitalise(key);
+
+            if (unitDefProp && unitDefProp.isBalanceChange === false) {
+                continue;
+            }
 
             if (typeof val === "object" && !Array.isArray(val) && !this.isArrayChange(val)) {
+                let changeType: ObjectChangeType = ObjectChangeType.MODIFIED;
+                if (prevValue === undefined) {
+                    changeType = ObjectChangeType.ADDED;
+                } else if (newValue === undefined) {
+                    changeType = ObjectChangeType.REMOVED;
+                }
+
+                let subChanges: Array<ObjectChanges | ValueChange> = this.getUnitDefChanges(prevValue, newValue, val);
+
+                if (key === "damage") {
+                    for (const change of (subChanges as ValueChange[])) {
+                        change.propertyName = this.capitalise(change.propertyName);
+                        change.changeType = this.getValueChangeType(change.prevValue, change.newValue, buffComparators.higherIsBetter );
+                    }
+                }
+
                 const change: ObjectChanges = {
                     propertyId: key,
-                    propertyName: unitDefProp?.friendlyName ?? this.unitNames[key] ?? name ?? key,
-                    changes: this.getUnitDefChanges(prevValue, newValue, val)
+                    propertyName: propName,
+                    changeType: changeType,
+                    changes: subChanges
                 }
 
-                changes.push(change);
+                if (subChanges.length) {
+                    changes.push(change);
+                }
             } else {
-                if (unitDefProp && unitDefProp.isBalanceChange === false) {
-                    continue;
-                }
-
-                let changeType: ChangeType = ChangeType.UNKNOWN;
-
                 const buffComparator = unitDefProp?.buffComparator;
-
-                if (prevValue === undefined) {
-                    changeType = ChangeType.ADDED;
-                } else if (newValue === undefined) {
-                    changeType = ChangeType.REMOVED;
-                }
-                
-                if (buffComparator) {
-                    changeType = buffComparator(prevValue, newValue) ? ChangeType.BUFF : ChangeType.NERF;
-                }
 
                 const change: ValueChange = {
                     propertyId: key,
-                    propertyName: unitDefProp?.friendlyName ?? this.unitNames[key] ?? name ?? key,
+                    propertyName: propName,
                     prevValue,
                     newValue,
-                    changeType
+                    changeType: this.getValueChangeType(prevValue, newValue, buffComparator)
                 }
 
                 if (typeof prevValue === "number" && typeof newValue === "number") {
                     change.percentChange = (newValue - prevValue) / prevValue;
                 } else if(Array.isArray(prevValue) && Array.isArray(newValue)) {
-                    const added: Array<string | number> = [];
-                    const removed: Array<string | number> = [];
+                    let added: any[] = [];
+                    let removed: any[] = [];
                     for (const val of newValue) {
                         if (!prevValue.includes(val)) {
                             added.push(val);
@@ -174,6 +242,7 @@ export class PatchFetcher {
                             removed.push(val);
                         }
                     }
+
                     change.arrayChange = { added, removed };
                 }
 
@@ -190,11 +259,39 @@ export class PatchFetcher {
         return typeof obj === "object" && !Array.isArray(obj) && !Number.isNaN(keyNum);
     }
 
+    protected capitalise(str: string): string {
+        return str[0].toUpperCase() + str.slice(1);
+    }
+
+    protected getValueChangeType(prevValue: any, newValue: any, buffComparator?: BuffComparator) : ValueChangeType{
+        let changeType: ValueChangeType = ValueChangeType.UNKNOWN;
+
+        if (prevValue === undefined) {
+            changeType = ValueChangeType.ADDED;
+        } else if (newValue === undefined) {
+            changeType = ValueChangeType.REMOVED;
+        } else if (buffComparator && ((typeof prevValue === "number" && typeof newValue === "number") || (typeof prevValue === "boolean" && typeof newValue === "boolean"))) {
+            changeType = buffComparator(prevValue, newValue) ? ValueChangeType.BUFF : ValueChangeType.NERF;
+        }
+
+        return changeType;
+    }
+
     protected parseUnitDef(unitDefStr: string) : any {
         const parsedFile = luaparse.parse(unitDefStr, { encodingMode: "x-user-defined" });
 
-        const returnBlock = parsedFile.body.find(chunk => chunk.type === "ReturnStatement") as ReturnStatement;
-        const unitDef = this.parseProp(returnBlock.arguments[0]);
+        let unitName: string | undefined;
+        const localBlocks = (parsedFile.body.filter(block => block.type === "LocalStatement") || []) as LocalStatement[];
+        for (const localBlock of localBlocks) {
+            for (const init of localBlock.init) {
+                if (init.type === "StringLiteral") {
+                    unitName = init.value;
+                }
+            }
+        }
+
+        const returnBlock = parsedFile.body.find(block => block.type === "ReturnStatement") as ReturnStatement | undefined;
+        const unitDef = this.parseProp(returnBlock!.arguments[0]);
 
         return unitDef;
     }
@@ -235,8 +332,17 @@ export class PatchFetcher {
         return unitDef;
     }
 
-    protected async parseUnitNames(unitsEn: string) : Promise<{ [key: string]: string; }>{
-        const parsedFile = luaparse.parse(unitsEn, { encodingMode: "x-user-defined" }) as any;
+    public async fetchUnitNames() : Promise<{ [key: string]: string; }> {
+        const unitsEn = await this.octokit.rest.repos.getContent({
+            owner: this.config.owner,
+            repo: this.config.repo,
+            path: "language/units_en.lua",
+            mediaType: {
+                format: "raw"
+            }
+        });
+
+        const parsedFile = luaparse.parse(unitsEn.data.toString(), { encodingMode: "x-user-defined" }) as any;
         const units = parsedFile.body[0].arguments[0].fields[0].value.fields[0].value.fields as TableKeyString[];
         const namesBlock = units.find(block => block.key.name === "names")?.value as TableConstructorExpression;
         const nameBlocks = namesBlock.fields as TableKeyString[];

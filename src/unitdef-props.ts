@@ -1,4 +1,4 @@
-import { IsBuffComparator, PreparsedUnitDef, UnitDefValueType } from "./types";
+import { BuffComparator, PreparsedUnitDef, PrimitiveValue, UnitDefValueType } from "./types";
 
 export const buffComparators = {
     higherIsBetter: (prev: number, curr: number) => curr > prev,
@@ -30,7 +30,7 @@ export const unitDefProps: PreparsedUnitDef = {
     collisionvolumescales: { friendlyName: "Collision Volume Scales", type: UnitDefValueType.NUMBER_ARRAY, isBalanceChange: false },
     collisionvolumetype: { friendlyName: "Collision Volume Type", type: UnitDefValueType.STRING, isBalanceChange: false },
     corpse: { friendlyName: "Corse Type", type: UnitDefValueType.STRING },
-    description: { friendlyName: "Description", type: UnitDefValueType.STRING },
+    description: { friendlyName: "Description", type: UnitDefValueType.STRING, isBalanceChange: false },
     energymake: { friendlyName: "Energy Generation", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     energystorage: { friendlyName: "Energy Storage", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     explodeas: { friendlyName: "Explosion Type", type: UnitDefValueType.STRING },
@@ -51,7 +51,7 @@ export const unitDefProps: PreparsedUnitDef = {
     metalstorage: { friendlyName: "Metal Storage", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     mincloakdistance: { friendlyName: "Min Cloak Distance", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.lowerIsBetter },
     movementclass: { friendlyName: "Movement Class", type: UnitDefValueType.STRING },
-    name: { friendlyName: "Name", type: UnitDefValueType.STRING },
+    name: { friendlyName: "Name", type: UnitDefValueType.STRING, isBalanceChange: false },
     nochasecategory: { friendlyName: "Name", type: UnitDefValueType.STRING },
     objectname: { friendlyName: "Object Name", type: UnitDefValueType.STRING, isBalanceChange: false },
     pushresistant: { friendlyName: "Push Resistant", type: UnitDefValueType.BOOLEAN },
@@ -79,7 +79,7 @@ export const unitDefProps: PreparsedUnitDef = {
     upright: { friendlyName: "Upright", type: UnitDefValueType.BOOLEAN },
     workertime: { friendlyName: "Build Power", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     buildoptions: { friendlyName: "Build Options", type: UnitDefValueType.STRING_ARRAY, isLuaTable: true },
-    customparams: { friendlyName: "Custom Params", type: UnitDefValueType.ANY_MAP },
+    customparams: { friendlyName: "Custom Params", type: UnitDefValueType.ANY_MAP, isBalanceChange: false },
     weapondefs: { friendlyName: "Weapons", type: UnitDefValueType.UNITDEF_OBJECT },
     featuredefs: { friendlyName: "Features", type: UnitDefValueType.UNITDEF_OBJECT },
 
@@ -103,6 +103,7 @@ export const unitDefProps: PreparsedUnitDef = {
     avoidground : { friendlyName: "Avoid Ground", type: UnitDefValueType.BOOLEAN },
     beamtime: { friendlyName: "Beam Time", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     bouncerebound: { friendlyName: "Bounce Rebound", type: UnitDefValueType.NUMBER },
+    burnblow: { friendlyName: "Self Explode", type: UnitDefValueType.BOOLEAN, buffComparator: buffComparators.trueIsBetter },
     cegtag: { friendlyName: "CEG Tag", type: UnitDefValueType.STRING },
     commandfire: { friendlyName: "Command Fire", type: UnitDefValueType.BOOLEAN },
     corethickness: { friendlyName: "Core Thickness", type: UnitDefValueType.NUMBER },
@@ -115,6 +116,7 @@ export const unitDefProps: PreparsedUnitDef = {
     explosiongenerator: { friendlyName: "Explosion Generator", type: UnitDefValueType.STRING },
     firestarter: { friendlyName: "Fire Starter", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.trueIsBetter },
     firesubmersed: { friendlyName: "Fire Submersed", type: UnitDefValueType.BOOLEAN },
+    flighttime: { friendlyName: "Flight Time", type: UnitDefValueType.NUMBER },
     groundbounce: { friendlyName: "Ground Bounce", type: UnitDefValueType.BOOLEAN, buffComparator: buffComparators.trueIsBetter },
     impactonly: { friendlyName: "Impact Only", type: UnitDefValueType.NUMBER },
     impulseboost: { friendlyName: "Impulse Boost", type: UnitDefValueType.NUMBER },
@@ -124,12 +126,14 @@ export const unitDefProps: PreparsedUnitDef = {
     noselfdamage: { friendlyName: "No Self Damage", type: UnitDefValueType.BOOLEAN, buffComparator: buffComparators.trueIsBetter },
     range: { friendlyName: "Range", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     reloadtime: { friendlyName: "Reload Time", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.lowerIsBetter },
-    rgbcolor: { friendlyName: "RGB Color", type: UnitDefValueType.NUMBER_ARRAY },
+    rgbcolor: { friendlyName: "RGB Color", type: UnitDefValueType.NUMBER_ARRAY, isBalanceChange: false },
+    sfxtypes: { friendlyName: "Sound Types", type: UnitDefValueType.UNITDEF_OBJECT, isBalanceChange: false },
     size: { friendlyName: "Size", type: UnitDefValueType.NUMBER },
-    soundhitdry: { friendlyName: "Sound Hit Dry", type: UnitDefValueType.STRING },
-    soundhitwet: { friendlyName: "Sound Hit Wet", type: UnitDefValueType.STRING },
-    soundstart: { friendlyName: "Sound Start", type: UnitDefValueType.STRING },
-    soundtrigger: { friendlyName: "Sound Trigger", type: UnitDefValueType.BOOLEAN },
+    sounds: { friendlyName: "Sounds", type: UnitDefValueType.UNITDEF_OBJECT, isBalanceChange: false },
+    soundhitdry: { friendlyName: "Sound Hit Dry", type: UnitDefValueType.STRING, isBalanceChange: false },
+    soundhitwet: { friendlyName: "Sound Hit Wet", type: UnitDefValueType.STRING, isBalanceChange: false },
+    soundstart: { friendlyName: "Sound Start", type: UnitDefValueType.STRING, isBalanceChange: false },
+    soundtrigger: { friendlyName: "Sound Trigger", type: UnitDefValueType.BOOLEAN, isBalanceChange: false },
     sprayangle: { friendlyName: "Spray Angle", type: UnitDefValueType.NUMBER },
     targetmoveerror: { friendlyName: "Target Move Error", type: UnitDefValueType.NUMBER },
     thickness: { friendlyName: "Thickness", type: UnitDefValueType.NUMBER },
@@ -139,7 +143,7 @@ export const unitDefProps: PreparsedUnitDef = {
     weapontimer: { friendlyName: "Weapon Timer", type: UnitDefValueType.NUMBER },
     weapontype: { friendlyName: "Weapon Type", type: UnitDefValueType.STRING },
     weaponvelocity: { friendlyName: "Weapon Velocity", type: UnitDefValueType.NUMBER },
-    alpha: { friendlyName: "Alpha", type: UnitDefValueType.NUMBER },
+    alpha: { friendlyName: "Alpha", type: UnitDefValueType.NUMBER, isBalanceChange: false },
     energyuse: { friendlyName: "Energy Use", type: UnitDefValueType.NUMBER },
     force: { friendlyName: "Force", type: UnitDefValueType.NUMBER },
     intercepttype: { friendlyName: "Intercept Type", type: UnitDefValueType.NUMBER },
@@ -152,6 +156,8 @@ export const unitDefProps: PreparsedUnitDef = {
     startingpower: { friendlyName: "Starting Power", type: UnitDefValueType.NUMBER },
     visible: { friendlyName: "Visible", type: UnitDefValueType.BOOLEAN },
     visiblehitframes: { friendlyName: "Visible Hit Frames", type: UnitDefValueType.NUMBER },
-    badcolor: { friendlyName: "Bad Color", type: UnitDefValueType.NUMBER_ARRAY },
-    goodcolor: { friendlyName: "Good Color", type: UnitDefValueType.NUMBER_ARRAY },
+    badcolor: { friendlyName: "Bad Color", type: UnitDefValueType.NUMBER_ARRAY, isBalanceChange: false },
+    goodcolor: { friendlyName: "Good Color", type: UnitDefValueType.NUMBER_ARRAY, isBalanceChange: false },
+
+    model_author: { friendlyName: "Model Author", type: UnitDefValueType.STRING, isBalanceChange: false }
 }

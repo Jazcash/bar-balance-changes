@@ -10,7 +10,7 @@ export enum UnitDefValueType {
     UNITDEF_OBJECT
 }
 
-export enum ChangeType {
+export enum ValueChangeType {
     BUFF = "Buff",
     NERF = "Nerf",
     ADDED = "Added",
@@ -19,10 +19,15 @@ export enum ChangeType {
     UNKNOWN = "Unknown"
 }
 
+export enum ObjectChangeType {
+    ADDED = "Added",
+    REMOVED = "Removed",
+    MODIFIED = "Modified"
+}
+
 export interface BalancePatch {
     sha: string;
     url: string;
-    branch: string;
     author: Author;
     date: Date;
     message: string;
@@ -39,6 +44,8 @@ export interface ObjectChanges {
     propertyId: string;
     propertyName: string;
     changes: Array<ValueChange | ObjectChanges>;
+    changeType: ObjectChangeType;
+    isScav?: boolean;
 }
 
 export interface ValueChange {
@@ -46,7 +53,7 @@ export interface ValueChange {
     propertyName: string;
     prevValue: PrimitiveValue;
     newValue: PrimitiveValue;
-    changeType: ChangeType;
+    changeType: ValueChangeType;
     percentChange?: number;
     arrayChange?: {
         added: Array<string | number>;
@@ -65,9 +72,9 @@ export interface PreparsedUnitDef {
 export interface PreparedUnitDefProperty {
     friendlyName: string;
     type: UnitDefValueType;
-    buffComparator?: IsBuffComparator<any>;
+    buffComparator?: BuffComparator;
     isBalanceChange?: boolean;
     isLuaTable?: boolean;
 }
 
-export type IsBuffComparator<T = PrimitiveValue> = (prev: T, curr: T) => boolean;
+export type BuffComparator = (prev: any, curr: any) => boolean;
