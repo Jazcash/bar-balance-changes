@@ -1,4 +1,4 @@
-import { BuffComparator, PreparsedUnitDef, PrimitiveValue, UnitDefValueType } from "./types";
+import { PreparsedUnitDef, UnitDefValueType } from "./types";
 
 export const buffComparators = {
     higherIsBetter: (prev: number, curr: number) => curr > prev,
@@ -100,7 +100,7 @@ export const unitDefProps: PreparsedUnitDef = {
     areaofeffect: { friendlyName: "Area of Effect", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     avoidfeature: { friendlyName: "Avoid Features", type: UnitDefValueType.BOOLEAN },
     avoidfriendly: { friendlyName: "Avoid Friendlies", type: UnitDefValueType.BOOLEAN },
-    avoidground : { friendlyName: "Avoid Ground", type: UnitDefValueType.BOOLEAN },
+    avoidground: { friendlyName: "Avoid Ground", type: UnitDefValueType.BOOLEAN },
     beamtime: { friendlyName: "Beam Time", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     bouncerebound: { friendlyName: "Bounce Rebound", type: UnitDefValueType.NUMBER },
     burnblow: { friendlyName: "Self Explode", type: UnitDefValueType.BOOLEAN, buffComparator: buffComparators.trueIsBetter },
@@ -160,4 +160,4 @@ export const unitDefProps: PreparsedUnitDef = {
     goodcolor: { friendlyName: "Good Color", type: UnitDefValueType.NUMBER_ARRAY, isBalanceChange: false },
 
     model_author: { friendlyName: "Model Author", type: UnitDefValueType.STRING, isBalanceChange: false }
-}
+};

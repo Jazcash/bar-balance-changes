@@ -1,8 +1,9 @@
 import { Octokit } from "@octokit/rest";
-import { diff, addedDiff, deletedDiff, updatedDiff, detailedDiff } from 'deep-object-diff';
+import {diff } from "deep-object-diff";
 import * as luaparse from "luaparse";
-import { Expression, LocalStatement, ReturnStatement, Statement, StringLiteral, TableConstructorExpression, TableKeyString } from "luaparse";
-import { ValueChangeType, ObjectChanges, PreparedUnitDefProperty, PrimitiveValue, UnitDefObject, UnitDefValueType, ValueChange, ObjectChangeType, BuffComparator, BalancePatch, Author } from "./types";
+import { Expression, LocalStatement, ReturnStatement, StringLiteral, TableConstructorExpression, TableKeyString } from "luaparse";
+
+import { Author, BalancePatch, BuffComparator, ObjectChanges, ObjectChangeType, PreparedUnitDefProperty, PrimitiveValue, UnitDefObject, UnitDefValueType, ValueChange, ValueChangeType } from "./types";
 import { buffComparators, unitDefProps } from "./unitdef-props";
 
 export interface PatchFetcherConfig {
@@ -13,6 +14,7 @@ export interface PatchFetcherConfig {
     since?: Date;
     until?: Date;
     shas?: string[];
+    upToSha?: string;
     numberOfCommits?: number;
 }
 
@@ -30,7 +32,7 @@ export class PatchFetcher {
     }
 
     public async fetchLatestBalancePatches() : Promise<BalancePatch[]> {
-        const commits = await this.octokit.rest.repos.listCommits({ 
+        const commits = await this.octokit.rest.repos.listCommits({
             owner: this.config.owner,
             repo: this.config.repo,
             sha: this.config.branch,
@@ -49,6 +51,10 @@ export class PatchFetcher {
 
             if (this.config?.shas?.length && !this.config?.shas.includes(commit.sha)) {
                 continue;
+            }
+
+            if (commit.sha === this.config.upToSha) {
+                break;
             }
 
             const balanceChange = await this.parseCommit(commit.sha);
@@ -80,7 +86,7 @@ export class PatchFetcher {
             };
 
             const changes = await this.parseCommitBalanceChanges(sha);
-            
+
             return { sha, date, message, url, author, changes };
         } catch (err) {
             console.log(err);
@@ -107,7 +113,7 @@ export class PatchFetcher {
                     try {
                         let previousUnitDef: any = undefined;
                         let currentUnitDef: any = undefined;
-    
+
                         if (file.status === "modified") {
                             previousUnitDef = await this.getUnitDef(file.filename, parentSHA);
                             currentUnitDef = await this.getUnitDef(file.filename, commitSha);
@@ -116,11 +122,11 @@ export class PatchFetcher {
                         } else if (file.status === "removed") {
                             previousUnitDef = await this.getUnitDef(file.filename, parentSHA);
                         }
-            
+
                         const unitDefDiff = diff(previousUnitDef, currentUnitDef);
-            
+
                         // console.log(JSON.stringify(unitDefDiff, null, 4));
-            
+
                         const unitChange = this.getUnitDefChanges(previousUnitDef, currentUnitDef, unitDefDiff)?.[0] as ObjectChanges;
 
                         if (unitChange?.changes?.length && file.filename.includes("Scavengers")) {
@@ -168,7 +174,7 @@ export class PatchFetcher {
             });
             unitDefProps.weapons = newWeaponsObj;
         }
-        
+
         return unitDef;
     }
 
@@ -211,7 +217,7 @@ export class PatchFetcher {
                     propertyName: propName,
                     changeType: changeType,
                     changes: subChanges
-                }
+                };
 
                 if (subChanges.length) {
                     changes.push(change);
@@ -225,11 +231,11 @@ export class PatchFetcher {
                     prevValue,
                     newValue,
                     changeType: this.getValueChangeType(prevValue, newValue, buffComparator)
-                }
+                };
 
                 if (typeof prevValue === "number" && typeof newValue === "number") {
                     change.percentChange = (newValue - prevValue) / prevValue;
-                } else if(Array.isArray(prevValue) && Array.isArray(newValue)) {
+                } else if (Array.isArray(prevValue) && Array.isArray(newValue)) {
                     let added: any[] = [];
                     let removed: any[] = [];
                     for (const val of newValue) {
@@ -263,7 +269,7 @@ export class PatchFetcher {
         return str[0].toUpperCase() + str.slice(1);
     }
 
-    protected getValueChangeType(prevValue: any, newValue: any, buffComparator?: BuffComparator) : ValueChangeType{
+    protected getValueChangeType(prevValue: any, newValue: any, buffComparator?: BuffComparator) : ValueChangeType {
         let changeType: ValueChangeType = ValueChangeType.UNKNOWN;
 
         if (prevValue === undefined) {
@@ -295,7 +301,7 @@ export class PatchFetcher {
 
         return unitDef;
     }
-    
+
     protected parseProp(expression: Expression, key?: string) : UnitDefObject | PrimitiveValue {
         const unitDef: UnitDefObject = {};
         const values: any[] = [];
@@ -322,7 +328,7 @@ export class PatchFetcher {
                 }
             }
 
-            return expression.value
+            return expression.value;
         }
 
         if (values.length) {
