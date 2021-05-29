@@ -18,7 +18,7 @@ export interface PatchFetcherConfig {
     numberOfCommits?: number;
 }
 
-export class PatchFetcher {
+export class BalanceChangeFetcher {
     public config: PatchFetcherConfig;
 
     protected octokit: Octokit;
