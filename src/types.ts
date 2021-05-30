@@ -25,7 +25,7 @@ export enum ObjectChangeType {
     MODIFIED = "Modified"
 }
 
-export interface BalancePatch {
+export interface BalanceChange {
     sha: string;
     url: string;
     author: Author;

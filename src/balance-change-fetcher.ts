@@ -1,65 +1,88 @@
 import { Octokit } from "@octokit/rest";
 import {diff } from "deep-object-diff";
+import { Optionals } from "jaz-ts-utils";
 import * as luaparse from "luaparse";
 import { Expression, LocalStatement, ReturnStatement, StringLiteral, TableConstructorExpression, TableKeyString } from "luaparse";
 
-import { Author, BalancePatch, BuffComparator, ObjectChanges, ObjectChangeType, PreparedUnitDefProperty, PrimitiveValue, UnitDefObject, UnitDefValueType, ValueChange, ValueChangeType } from "./types";
+import { Author, BalanceChange, BuffComparator, ObjectChanges, ObjectChangeType, PreparedUnitDefProperty, PrimitiveValue, UnitDefObject, UnitDefValueType, ValueChange, ValueChangeType } from "./types";
 import { buffComparators, unitDefProps } from "./unitdef-props";
 
-export interface PatchFetcherConfig {
+export interface BalanceChangeFetcherConfig {
     owner: string;
     repo: string;
     branch?: string;
     auth?: string;
+    errorLoggingFunction?: (str: string) => void;
+}
+
+const defaultBalanceChangeFetcherConfig: BalanceChangeFetcherConfig = {
+    owner: "beyond-all-reason",
+    repo: "beyond-all-reason",
+    errorLoggingFunction: console.error
+};
+
+export interface FetchOptions {
     since?: Date;
     until?: Date;
-    shas?: string[];
+    excludeShas?: string[];
     upToSha?: string;
-    numberOfCommits?: number;
+    limit?: number;
+    page?: number;
+    perPage?: number;
 }
 
 export class BalanceChangeFetcher {
-    public config: PatchFetcherConfig;
+    public config: BalanceChangeFetcherConfig;
 
     protected octokit: Octokit;
 
-    constructor(config: PatchFetcherConfig) {
-        this.config = config;
+    constructor(config: BalanceChangeFetcherConfig) {
+        this.config = Object.assign({}, defaultBalanceChangeFetcherConfig, config);
 
         this.octokit = new Octokit({
             auth: this.config.auth
         });
     }
 
-    public async fetchLatestBalancePatches() : Promise<BalancePatch[]> {
+    public async fetchLatestBalanceChanges(options?: FetchOptions) : Promise<BalanceChange[]> {
         const commits = await this.octokit.rest.repos.listCommits({
             owner: this.config.owner,
             repo: this.config.repo,
             sha: this.config.branch,
             path: "units",
-            since: this.config?.since?.toISOString(),
-            until: this.config?.until?.toISOString()
+            since: options?.since?.toISOString(),
+            until: options?.until?.toISOString(),
+            page: options?.page,
+            per_page: options?.perPage
         });
 
-        const balanceChanges: BalancePatch[] = [];
+        const balanceChanges: BalanceChange[] = [];
 
         let numOfCommitsProcessed = 0;
         for (const commit of commits.data) {
-            if (numOfCommitsProcessed === this.config?.numberOfCommits) {
-                break;
-            }
+            try {
+                if (numOfCommitsProcessed === options?.limit) {
+                    break;
+                }
 
-            if (this.config?.shas?.length && !this.config?.shas.includes(commit.sha)) {
-                continue;
-            }
+                if (options?.excludeShas?.length && options.excludeShas.includes(commit.sha)) {
+                    console.log(`Skipping commit ${commit.sha}`);
+                    continue;
+                }
 
-            if (commit.sha === this.config.upToSha) {
-                break;
-            }
+                if (commit.sha === options?.upToSha) {
+                    break;
+                }
 
-            const balanceChange = await this.parseCommit(commit.sha);
-            if (balanceChange) {
-                balanceChanges.push(balanceChange);
+                console.log(`Fetching commit ${commit.sha}`);
+                const balanceChange = await this.parseCommit(commit.sha);
+                if (balanceChange) {
+                    balanceChanges.push(balanceChange);
+                }
+            } catch (err) {
+                //this.config.errorLoggingFunction!(err);
+                console.error(err);
+                console.log(`There was an error processing ${commit.sha}`);
             }
 
             numOfCommitsProcessed++;
@@ -68,7 +91,7 @@ export class BalanceChangeFetcher {
         return balanceChanges;
     }
 
-    protected async parseCommit(sha: string) : Promise<BalancePatch | undefined> {
+    protected async parseCommit(sha: string) : Promise<BalanceChange | undefined> {
         try {
             const fullCommit = await this.octokit.rest.repos.getCommit({
                 owner: this.config.owner,
@@ -80,7 +103,7 @@ export class BalanceChangeFetcher {
             const message = fullCommit.data.commit.message;
             const url = fullCommit.data.html_url;
             const author: Author = {
-                name: fullCommit.data.commit.committer?.name!,
+                name: fullCommit.data.author?.login!,
                 avatarUrl: fullCommit.data.author?.avatar_url!,
                 profileLink: fullCommit.data.author?.html_url!
             };
@@ -89,7 +112,8 @@ export class BalanceChangeFetcher {
 
             return { sha, date, message, url, author, changes };
         } catch (err) {
-            console.log(err);
+            //this.config.errorLoggingFunction!(err);
+            console.error(err);
             console.log(`Error processing commit: ${sha}`);
 
             return;
@@ -137,7 +161,8 @@ export class BalanceChangeFetcher {
                             unitChanges.push(unitChange);
                         }
                     } catch (err) {
-                        console.log(err);
+                        //this.config.errorLoggingFunction!(err);
+                        console.error(err);
                         console.log(`Error parsing unitDef: ${file.filename} (${commitSha})`);
                     }
                 }
@@ -145,7 +170,8 @@ export class BalanceChangeFetcher {
 
             return unitChanges;
         } catch (err) {
-            console.log(err);
+            //this.config.errorLoggingFunction!(err);
+            console.error(err);
             console.log(`Error processing commit: ${commitSha}`);
 
             return [];
