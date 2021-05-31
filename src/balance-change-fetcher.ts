@@ -66,7 +66,7 @@ export class BalanceChangeFetcher {
                 }
 
                 if (options?.excludeShas?.length && options.excludeShas.includes(commit.sha)) {
-                    console.log(`Skipping commit ${commit.sha}`);
+                    // console.log(`Skipping commit ${commit.sha}`);
                     continue;
                 }
 
