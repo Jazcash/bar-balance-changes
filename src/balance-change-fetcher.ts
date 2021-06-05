@@ -35,6 +35,7 @@ export class BalanceChangeFetcher {
     public config: BalanceChangeFetcherConfig;
 
     protected octokit: Octokit;
+    protected unitNames: { [key: string]: string; } = {};
 
     constructor(config: BalanceChangeFetcherConfig) {
         this.config = Object.assign({}, defaultBalanceChangeFetcherConfig, config);
@@ -45,6 +46,8 @@ export class BalanceChangeFetcher {
     }
 
     public async fetchLatestBalanceChanges(options?: FetchOptions) : Promise<BalanceChange[]> {
+        this.unitNames = await this.fetchUnitNames();
+
         const commits = await this.octokit.rest.repos.listCommits({
             owner: this.config.owner,
             repo: this.config.repo,
@@ -215,7 +218,7 @@ export class BalanceChangeFetcher {
             const unitDefProp: undefined | PreparedUnitDefProperty = unitDefProps[key];
             const prevValue = prevUnitDefObj?.[key];
             const newValue = newUnitDefObj?.[key];
-            const propName = unitDefProp?.friendlyName ?? namePropValue ?? this.capitalise(key);
+            const propName = unitDefProp?.friendlyName ?? this.unitNames[key] ?? namePropValue ?? this.capitalise(key);
 
             if (unitDefProp && unitDefProp.isBalanceChange === false) {
                 continue;
@@ -364,6 +367,7 @@ export class BalanceChangeFetcher {
         return unitDef;
     }
 
+    // TODO: move this into bar-db
     public async fetchUnitNames() : Promise<{ [key: string]: string; }> {
         const unitsEn = await this.octokit.rest.repos.getContent({
             owner: this.config.owner,
