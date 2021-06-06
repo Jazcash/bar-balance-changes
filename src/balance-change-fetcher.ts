@@ -29,6 +29,7 @@ export interface FetchOptions {
     limit?: number;
     page?: number;
     perPage?: number;
+    sha?: string;
 }
 
 export class BalanceChangeFetcher {
@@ -60,6 +61,13 @@ export class BalanceChangeFetcher {
         });
 
         const balanceChanges: BalanceChange[] = [];
+
+        if (options?.sha) {
+            const commit = commits.data.find(commit => commit.sha === options.sha);
+            if (commit) {
+                commits.data = [commit];
+            }
+        }
 
         let numOfCommitsProcessed = 0;
         for (const commit of commits.data) {
@@ -151,8 +159,6 @@ export class BalanceChangeFetcher {
                         }
 
                         const unitDefDiff = diff(previousUnitDef, currentUnitDef);
-
-                        // console.log(JSON.stringify(unitDefDiff, null, 4));
 
                         const unitChange = this.getUnitDefChanges(previousUnitDef, currentUnitDef, unitDefDiff)?.[0] as ObjectChanges;
 
