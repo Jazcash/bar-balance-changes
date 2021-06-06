@@ -1,6 +1,5 @@
 import { Octokit } from "@octokit/rest";
 import {diff } from "deep-object-diff";
-import { Optionals } from "jaz-ts-utils";
 import * as luaparse from "luaparse";
 import { Expression, LocalStatement, ReturnStatement, StringLiteral, TableConstructorExpression, TableKeyString } from "luaparse";
 
