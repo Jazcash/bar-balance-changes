@@ -79,11 +79,23 @@ export const unitDefProps: PreparsedUnitDef = {
     upright: { friendlyName: "Upright", type: UnitDefValueType.BOOLEAN },
     workertime: { friendlyName: "Build Power", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     buildoptions: { friendlyName: "Build Options", type: UnitDefValueType.STRING_ARRAY, isLuaTable: true },
-    customparams: { friendlyName: "Custom Params", type: UnitDefValueType.ANY_MAP, isBalanceChange: false },
-    weapondefs: { friendlyName: "Weapons", type: UnitDefValueType.UNITDEF_OBJECT },
-    featuredefs: { friendlyName: "Features", type: UnitDefValueType.UNITDEF_OBJECT },
 
+    // Custom params
+    customparams: { friendlyName: "Custom Params", type: UnitDefValueType.ANY_MAP },
+    paralyzemultiplier: { friendlyName: "Paralyze Multiplier", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.lowerIsBetter },
+    expl_light_color: { friendlyName: "Explosion Light Color", type: UnitDefValueType.STRING, isBalanceChange: false },
+    expl_light_mult: { friendlyName: "Explosion Light Multiplier", type: UnitDefValueType.NUMBER, isBalanceChange: false },
+    expl_light_radius_mult: { friendlyName: "Explosion Light Radius Multiplier", type: UnitDefValueType.NUMBER, isBalanceChange: false },
+    light_color: { friendlyName: "Light Color", type: UnitDefValueType.STRING, isBalanceChange: false },
+    light_skip: { friendlyName: "Light Skip", type: UnitDefValueType.BOOLEAN, isBalanceChange: false },
+    normaltex: { friendlyName: "Normal Texture", type: UnitDefValueType.STRING, isBalanceChange: false },
+    model_author: { friendlyName: "Model Author", type: UnitDefValueType.STRING, isBalanceChange: false },
+    subfolder: { friendlyName: "Subfolder", type: UnitDefValueType.STRING, isBalanceChange: false },
+    longdescription: { friendlyName: "Long Description", type: UnitDefValueType.STRING, isBalanceChange: false },
+    area_mex_def: { friendlyName: "Arex Mex Def", type: UnitDefValueType.STRING, isBalanceChange: false },
+    
     // https://springrts.com/wiki/Gamedev:FeatureDefs
+    featuredefs: { friendlyName: "Features", type: UnitDefValueType.UNITDEF_OBJECT },
     blocking: { friendlyName: "Blocking", type: UnitDefValueType.BOOLEAN },
     damage: { friendlyName: "Damage", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     energy: { friendlyName: "Energy", type: UnitDefValueType.NUMBER },
@@ -95,8 +107,9 @@ export const unitDefProps: PreparsedUnitDef = {
     object: { friendlyName: "Object", type: UnitDefValueType.STRING, isBalanceChange: false },
     seqnamereclamate: { friendlyName: "Seqname Reclamate", type: UnitDefValueType.STRING, isBalanceChange: false },
     world: { friendlyName: "World", type: UnitDefValueType.STRING, isBalanceChange: false },
-
+    
     // https://springrts.com/wiki/Gamedev:WeaponDefs
+    weapondefs: { friendlyName: "Weapons", type: UnitDefValueType.UNITDEF_OBJECT },
     areaofeffect: { friendlyName: "Area of Effect", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     avoidfeature: { friendlyName: "Avoid Features", type: UnitDefValueType.BOOLEAN },
     avoidfriendly: { friendlyName: "Avoid Friendlies", type: UnitDefValueType.BOOLEAN },
@@ -157,7 +170,5 @@ export const unitDefProps: PreparsedUnitDef = {
     visible: { friendlyName: "Visible", type: UnitDefValueType.BOOLEAN },
     visiblehitframes: { friendlyName: "Visible Hit Frames", type: UnitDefValueType.NUMBER },
     badcolor: { friendlyName: "Bad Color", type: UnitDefValueType.NUMBER_ARRAY, isBalanceChange: false },
-    goodcolor: { friendlyName: "Good Color", type: UnitDefValueType.NUMBER_ARRAY, isBalanceChange: false },
-
-    model_author: { friendlyName: "Model Author", type: UnitDefValueType.STRING, isBalanceChange: false }
+    goodcolor: { friendlyName: "Good Color", type: UnitDefValueType.NUMBER_ARRAY, isBalanceChange: false }
 };
