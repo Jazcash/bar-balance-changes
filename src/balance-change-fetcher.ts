@@ -318,7 +318,7 @@ export class BalanceChangeFetcher {
     }
 
     protected parseUnitDef(unitDefStr: string) : any {
-        const parsedFile = luaparse.parse(unitDefStr, { encodingMode: "x-user-defined" });
+        const parsedFile = luaparse.parse(unitDefStr, { encodingMode: "x-user-defined", comments: false });
 
         let unitName: string | undefined;
         const localBlocks = (parsedFile.body.filter(block => block.type === "LocalStatement") || []) as LocalStatement[];
