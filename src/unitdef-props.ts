@@ -106,6 +106,7 @@ export const unitDefProps: PreparsedUnitDef = {
     expl_light_heat_strength_mult: { friendlyName: "", type: UnitDefValueType.NUMBER, isBalanceChange: false },
     expl_light_heat_radius: { friendlyName: "", type: UnitDefValueType.NUMBER, isBalanceChange: false },
     expl_light_radius: { friendlyName: "", type: UnitDefValueType.NUMBER, isBalanceChange: false },
+    texture2: { friendlyName: "", type: UnitDefValueType.NUMBER, isBalanceChange: false },
     
     // https://springrts.com/wiki/Gamedev:FeatureDefs
     featuredefs: { friendlyName: "Features", type: UnitDefValueType.UNITDEF_OBJECT },
