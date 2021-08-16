@@ -90,6 +90,7 @@ export const unitDefProps: PreparsedUnitDef = {
     expl_light_color: { friendlyName: "Explosion Light Color", type: UnitDefValueType.STRING, isBalanceChange: false },
     expl_light_mult: { friendlyName: "Explosion Light Multiplier", type: UnitDefValueType.NUMBER, isBalanceChange: false },
     expl_light_radius_mult: { friendlyName: "Explosion Light Radius Multiplier", type: UnitDefValueType.NUMBER, isBalanceChange: false },
+    expl_light_life_mult: { friendlyName: "Explosion Light Life Multiplier", type: UnitDefValueType.NUMBER, isBalanceChange: false },
     light_color: { friendlyName: "Light Color", type: UnitDefValueType.STRING, isBalanceChange: false },
     light_skip: { friendlyName: "Light Skip", type: UnitDefValueType.BOOLEAN, isBalanceChange: false },
     normaltex: { friendlyName: "Normal Texture", type: UnitDefValueType.STRING, isBalanceChange: false },
@@ -106,7 +107,7 @@ export const unitDefProps: PreparsedUnitDef = {
     expl_light_heat_strength_mult: { friendlyName: "", type: UnitDefValueType.NUMBER, isBalanceChange: false },
     expl_light_heat_radius: { friendlyName: "", type: UnitDefValueType.NUMBER, isBalanceChange: false },
     expl_light_radius: { friendlyName: "", type: UnitDefValueType.NUMBER, isBalanceChange: false },
-    texture2: { friendlyName: "", type: UnitDefValueType.NUMBER, isBalanceChange: false },
+    texture2: { friendlyName: "Texture 2", type: UnitDefValueType.STRING, isBalanceChange: false },
     
     // https://springrts.com/wiki/Gamedev:FeatureDefs
     featuredefs: { friendlyName: "Features", type: UnitDefValueType.UNITDEF_OBJECT },
