@@ -70,8 +70,8 @@ export interface PreparsedUnitDef {
 }
 
 export interface PreparedUnitDefProperty {
-    friendlyName: string;
-    type: UnitDefValueType;
+    friendlyName?: string;
+    type?: UnitDefValueType;
     buffComparator?: BuffComparator;
     isBalanceChange?: boolean;
     isLuaTable?: boolean;

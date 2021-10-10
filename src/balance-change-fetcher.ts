@@ -143,7 +143,7 @@ export class BalanceChangeFetcher {
             const files = fullCommit.data.files ?? [];
             const unitChanges: ObjectChanges[] = [];
             for (const file of files) {
-                if (file.filename && file.filename.match(/^units\/.*?\.lua$/)) {
+                if (file.filename && file.filename.match(/^units\/.*?\.lua$/) && !file.filename.includes("other") && !file.filename.includes("Scavengers")) {
                     try {
                         let previousUnitDef: any = undefined;
                         let currentUnitDef: any = undefined;
@@ -160,10 +160,6 @@ export class BalanceChangeFetcher {
                         const unitDefDiff = diff(previousUnitDef, currentUnitDef);
 
                         const unitChange = this.getUnitDefChanges(previousUnitDef, currentUnitDef, unitDefDiff)?.[0] as ObjectChanges;
-
-                        if (unitChange?.changes?.length && file.filename.includes("Scavengers")) {
-                            unitChange.isScav = true;
-                        }
 
                         if (unitChange?.changes?.length) {
                             unitChanges.push(unitChange);
@@ -212,7 +208,7 @@ export class BalanceChangeFetcher {
         return unitDef;
     }
 
-    protected getUnitDefChanges(prevUnitDefObj?: any, newUnitDefObj?: any, diffObj?: any) : Array<ValueChange | ObjectChanges> {
+    protected getUnitDefChanges(prevUnitDefObj?: any, newUnitDefObj?: any, diffObj?: any, isCustomParams = false) : Array<ValueChange | ObjectChanges> {
         const changes: Array<ValueChange | ObjectChanges> = [];
         let namePropValue = (Object.entries(newUnitDefObj)?.[0]?.[1] as any)?.name as string | undefined;
         if (typeof namePropValue !== "string") {
@@ -220,12 +216,16 @@ export class BalanceChangeFetcher {
         }
 
         for (const [key, val] of Object.entries(diffObj)) {
-            const unitDefProp: undefined | PreparedUnitDefProperty = unitDefProps[key];
+            const unitDefProp: undefined | PreparedUnitDefProperty = unitDefProps[key] || unitDefProps[key.toLowerCase()];
             const prevValue = prevUnitDefObj?.[key];
             const newValue = newUnitDefObj?.[key];
             const propName = unitDefProp?.friendlyName ?? this.unitNames[key] ?? namePropValue ?? this.capitalise(key);
 
             if (unitDefProp && unitDefProp.isBalanceChange === false) {
+                continue;
+            }
+
+            if (isCustomParams && key !== "paralyzemultiplier") {
                 continue;
             }
 
@@ -237,7 +237,7 @@ export class BalanceChangeFetcher {
                     changeType = ObjectChangeType.REMOVED;
                 }
 
-                let subChanges: Array<ObjectChanges | ValueChange> = this.getUnitDefChanges(prevValue, newValue, val);
+                let subChanges: Array<ObjectChanges | ValueChange> = this.getUnitDefChanges(prevValue, newValue, val, key === "customparams");
 
                 if (key === "damage") {
                     for (const change of (subChanges as ValueChange[])) {
