@@ -51,7 +51,7 @@ export class BalanceChangeFetcher {
         const commits = await this.octokit.rest.repos.listCommits({
             owner: this.config.owner,
             repo: this.config.repo,
-            sha: this.config.branch,
+            sha: options?.sha ?? this.config.branch,
             path: "units",
             since: options?.since?.toISOString(),
             until: options?.until?.toISOString(),

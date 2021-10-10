@@ -85,7 +85,7 @@ export const unitDefProps: PreparsedUnitDef = {
     yardmap: { friendlyName: "Yardmap", type: UnitDefValueType.STRING, isBalanceChange: false },
 
     // Custom params
-    customparams: { friendlyName: "Custom Params", type: UnitDefValueType.ANY_MAP, isBalanceChange: false },
+    customparams: { friendlyName: "Custom Params", type: UnitDefValueType.ANY_MAP },
     paralyzemultiplier: { friendlyName: "Paralyze Multiplier", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.lowerIsBetter, isBalanceChange: true },
     expl_light_color: { friendlyName: "Explosion Light Color", type: UnitDefValueType.STRING, isBalanceChange: false },
     expl_light_mult: { friendlyName: "Explosion Light Multiplier", type: UnitDefValueType.NUMBER, isBalanceChange: false },
