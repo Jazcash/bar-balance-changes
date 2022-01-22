@@ -169,6 +169,7 @@ export const unitDefProps: PreparsedUnitDef = {
     sounds: { friendlyName: "Sounds", type: UnitDefValueType.UNITDEF_OBJECT, isBalanceChange: false },
     soundhit: { friendlyName: "Sound Hit", type: UnitDefValueType.STRING, isBalanceChange: false },
     soundhitdry: { friendlyName: "Sound Hit Dry", type: UnitDefValueType.STRING, isBalanceChange: false },
+    soundhitwetvolume: { isBalanceChange: false },
     soundhitwet: { friendlyName: "Sound Hit Wet", type: UnitDefValueType.STRING, isBalanceChange: false },
     soundstartvolume: { friendlyName: "Sound Start Volume", type: UnitDefValueType.STRING, isBalanceChange: false },
     soundhitvolume: { friendlyName: "Sound Hit Volume", type: UnitDefValueType.STRING, isBalanceChange: false },

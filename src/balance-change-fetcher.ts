@@ -1,11 +1,13 @@
 import { Octokit } from "@octokit/rest";
 import {diff } from "deep-object-diff";
 import * as luaparse from "luaparse";
-import { Expression, LocalStatement, ReturnStatement, StringLiteral, TableConstructorExpression, TableKeyString } from "luaparse";
+import { Expression, LocalStatement, ReturnStatement } from "luaparse";
 
 import { Author, BalanceChange, BuffComparator, ObjectChanges, ObjectChangeType, PreparedUnitDefProperty, PrimitiveValue, UnitDefObject, UnitDefValueType, ValueChange, ValueChangeType } from "./types";
 import { buffComparators, unitDefProps } from "./unitdef-props";
 
+// todo: add callback for change processing
+// add ability to parse multiple pages at once
 export interface BalanceChangeFetcherConfig {
     owner: string;
     repo: string;
@@ -374,25 +376,17 @@ export class BalanceChangeFetcher {
 
     // TODO: move this into bar-db
     public async fetchUnitNames() : Promise<{ [key: string]: string; }> {
-        const unitsEn = await this.octokit.rest.repos.getContent({
+        const unitsEnResponse = await this.octokit.rest.repos.getContent({
             owner: this.config.owner,
             repo: this.config.repo,
-            path: "language/units_en.lua",
+            path: "language/units_en.json",
             mediaType: {
                 format: "raw"
             }
         });
 
-        const parsedFile = luaparse.parse(unitsEn.data.toString(), { encodingMode: "x-user-defined" }) as any;
-        const units = parsedFile.body[0].arguments[0].fields[0].value.fields[0].value.fields as TableKeyString[];
-        const namesBlock = units.find(block => block.key.name === "names")?.value as TableConstructorExpression;
-        const nameBlocks = namesBlock.fields as TableKeyString[];
+        const unitsEn = JSON.parse(unitsEnResponse.data.toString());
 
-        const unitNames: { [key: string]: string; } = {};
-        for (const block of nameBlocks) {
-            unitNames[block.key.name] = (block.value as StringLiteral).value;
-        }
-
-        return unitNames;
+        return unitsEn.en.units.names;
     }
 }
