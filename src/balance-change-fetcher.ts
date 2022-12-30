@@ -387,6 +387,6 @@ export class BalanceChangeFetcher {
 
         const unitsEn = JSON.parse(unitsEnResponse.data.toString());
 
-        return unitsEn.en.units.names;
+        return unitsEn.units.names;
     }
 }
