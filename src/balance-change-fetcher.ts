@@ -379,7 +379,7 @@ export class BalanceChangeFetcher {
         const unitsEnResponse = await this.octokit.rest.repos.getContent({
             owner: this.config.owner,
             repo: this.config.repo,
-            path: "language/units_en.json",
+            path: "language/en/units.json",
             mediaType: {
                 format: "raw"
             }
