@@ -223,10 +223,6 @@ export class BalanceChangeFetcher {
             const newValue = newUnitDefObj?.[key];
             const propName = unitDefProp?.friendlyName ?? this.unitNames[key] ?? namePropValue ?? this.capitalise(key);
 
-            if (unitDefProp && unitDefProp.isBalanceChange === false) {
-                continue;
-            }
-
             if (isCustomParams && key !== "paralyzemultiplier") {
                 continue;
             }

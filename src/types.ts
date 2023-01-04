@@ -73,7 +73,6 @@ export interface PreparedUnitDefProperty {
     friendlyName?: string;
     type?: UnitDefValueType;
     buffComparator?: BuffComparator;
-    isBalanceChange?: boolean;
     isLuaTable?: boolean;
 }
 
