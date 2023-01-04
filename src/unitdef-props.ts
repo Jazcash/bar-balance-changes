@@ -118,6 +118,7 @@ export const unitDefProps: PreparsedUnitDef = {
     repulser: { friendlyName: "Repulser", type: UnitDefValueType.NUMBER },
     smart: { friendlyName: "Smart", type: UnitDefValueType.BOOLEAN },
     startingpower: { friendlyName: "Starting Power", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
+    startvelocity: { friendlyName: "Start Velocity", type: UnitDefValueType.NUMBER, buffComparator: buffComparators.higherIsBetter },
     visible: { friendlyName: "Visible", type: UnitDefValueType.BOOLEAN },
     visiblehitframes: { friendlyName: "Visible Hit Frames", type: UnitDefValueType.NUMBER },
 
