@@ -23,7 +23,7 @@
     "@octokit/core": "^3.4.0",
     "@octokit/rest": "^18.5.2",
     "@types/better-sqlite3": "^5.4.1",
-    "better-sqlite3": "^7.1.4",
+    "better-sqlite3": "^9.3.0",
     "deep-object-diff": "^1.1.0",
     "jaz-ts-utils": "^0.4.0",
     "luaparse": "^0.3.0",
